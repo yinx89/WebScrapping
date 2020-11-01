@@ -5,6 +5,8 @@ from selenium.webdriver.firefox.options import Options
 from bs4 import BeautifulSoup
 from time import sleep
 from selenium.webdriver.common.keys import Keys
+import pandas as pd
+import re
 
 def cambia_IP():
     with Controller.from_port(port = 9051) as controlador:
@@ -56,12 +58,109 @@ print(html)
 sleep(5)
 admi = driver.find_element_by_xpath("//button[@aria-label='Ver solo resultados de Empleos.']")
 admi.click()
-sleep(5)
+
+sleep(3)
+# driver.execute_script("document.getElementsByClassName('jobs-search__left-rail')[0].scrollBy();")
+# driver.execute_script("const i = 0;const item = document.querySelectorAll('.jobs-search-results__list-item')[i];item.forEach(item => {item.scrollIntoView({ behavior: 'smooth', block: 'start' });});")
+driver.execute_script("const item = document.querySelectorAll('.jobs-search-results__list-item')[0];item.scrollIntoView({ behavior: 'smooth', block: 'start' });")
+sleep(1)
+driver.execute_script("const item = document.querySelectorAll('.jobs-search-results__list-item')[5];item.scrollIntoView({ behavior: 'smooth', block: 'start' });")
+sleep(1)
+driver.execute_script("const item = document.querySelectorAll('.jobs-search-results__list-item')[10];item.scrollIntoView({ behavior: 'smooth', block: 'start' });")
+sleep(1)
+driver.execute_script("const item = document.querySelectorAll('.jobs-search-results__list-item')[15];item.scrollIntoView({ behavior: 'smooth', block: 'start' });")
+sleep(1)
+driver.execute_script("const item = document.querySelectorAll('.jobs-search-results__list-item')[20];item.scrollIntoView({ behavior: 'smooth', block: 'start' });")
+sleep(1)
+driver.execute_script("const item = document.querySelectorAll('.jobs-search-results__list-item')[24];item.scrollIntoView({ behavior: 'smooth', block: 'start' });")
+sleep(1)
+
+
+# sleep(20)
 html = driver.page_source
 soup = BeautifulSoup(html, 'lxml')
 container = soup.find('ul', class_ = 'jobs-search-results__list')
 print(soup)
 print('Obtenidos {} puestos de trabajo'.format(len(container)))
+
+# setting up list for job information
+job_id = []
+post_title = []
+company_name = []
+post_date = []
+job_location = []
+job_desc = []
+level = []
+emp_type = []
+functions = []
+industries = []
+
+# jobs = soup.findAll(class_ = 'jobs-search-results__list-item')
+
+# for loop for job title, company, id, location and date posted
+for job in soup.find_all(class_ = 'jobs-search-results__list-item'):
+    
+    # job title job-card-list__title
+    job_titles = job.find("a", class_="job-card-list__title")
+    if job_titles is not None:
+        post_title.append(job_titles.text)
+    else:
+        post_title.append("None")
+    print(job_titles)
+    
+    # linkedin job id
+    job_ids = job.find('a', href=True)
+    if job_ids is not None:
+        job_ids = job_ids['href']
+        job_ids = re.findall(r'(?!-)([0-9]*)(?=\?)',job_ids)[0]
+        job_id.append(job_ids)
+    else:
+        job_id.append("None")
+    print(job_ids)
+    
+    # company name
+    company_names = job.find("a", class_="job-card-container__company-name")
+    if company_names is not None:
+        company_name.append(company_names.text)
+    else:
+        company_name.append("None")
+    print(company_names)
+    
+    # job location job-card-container__metadata-item
+    job_locations = job.find("li", class_="job-card-container__metadata-item")
+    if job_locations is not None:
+        job_location.append(job_locations.text)
+    else:
+        job_location.append("None")
+    print(job_location)
+    
+    # posting date soup.find("a",{"class":"Label"})
+    post_dates = job.find("time")
+    if post_dates is not None:
+        post_date.append(post_dates.text)
+    else:
+        post_date.append("None")
+    print(post_date)
+
+print(len(job_id))
+print(len(post_date))
+print(len(company_name))
+print(len(post_title))
+print(len(job_location))
+print(len(job_desc))
+print(len(level))
+print(len(emp_type))
+print(len(functions))
+print(len(industries))
+
+job_data = pd.DataFrame({'Job ID': job_id,
+'Date': post_date,
+'Company Name': company_name,
+'Post': post_title,
+'Location': job_location
+})
+
+job_data.head()
 
 # LOGIN - Using Tor and changing proxies
 # proxy = my_Proxy("127.0.0.1", 9050)
