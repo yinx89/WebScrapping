@@ -4,7 +4,9 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from bs4 import BeautifulSoup
 from time import sleep
-from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 def cambia_IP():
     with Controller.from_port(port = 9051) as controlador:
@@ -20,43 +22,43 @@ def my_Proxy(PROXY_HOST,PROXY_PORT):
     profile.update_preferences()
     options = Options()
     options.headless = True
-    return webdriver.Firefox(options=options, firefox_profile=profile, 
+    return webdriver.Firefox(options=options, firefox_profile=profile,
                              executable_path = '/usr/local/bin/geckodriver')
 
+t0 = time.time()
 # LOGIN - Web scrapping usgin normal IP
 driver = webdriver.Firefox(executable_path = '/usr/local/bin/geckodriver')
 driver.get("https://www.linkedin.com")
-sleep(3)
+response_delay = time.time() - t0
+time.sleep(1 + response_delay)
 username = driver.find_element_by_id("session_key")
-sleep(3)
-username.send_keys('david.herrera@fw025.com')
+time.sleep(1 + response_delay)
+username.send_keys('wallacedaniel.89@outlook.com')
 password = driver.find_element_by_name('session_password')
-sleep(3)
-password.send_keys('nAs7Rn&if?B!')
+time.sleep(3 + response_delay)
+password.send_keys('jT7.W56TbVr28')
 log_in_button= driver.find_element_by_class_name('sign-in-form__submit-button')
-sleep(3)
+time.sleep(3 + response_delay)
 log_in_button.click()
-sleep(3)
-# saltar_num = driver.find_element_by_class_name('secondary-action')
-# sleep(3)
-# saltar_num.click()
-# sleep(3)
-# confirm_button = driver.find_element_by_class_name('primary-action-new')
-# sleep(3)
-# confirm_button.click()
-# FIN LOGIN
-# START SEARCHING
-buscar = driver.find_element_by_class_name('search-global-typeahead__input')
-sleep(3)
-buscar.send_keys('data scientist')
-sleep(3)
-buscar.send_keys(Keys.RETURN)
+time.sleep(3 + response_delay)
+jobs = WebDriverWait(driver, 10).until(
+    EC.presence_of_element_located((By.ID, "ember26"))) # Explicit wait
+jobs.click()
+time.sleep(3 + response_delay)
+search_job = driver.find_element_by_class_name('jobs-search-box__text-input')
+time.sleep(3 + response_delay)
+search_job.send_keys('data scientist')
+time.sleep(3 + response_delay)
+location.clear()
+time.sleep(3 + response_delay)
+location.send_keys('Worldwide')
+time.sleep(3 + response_delay)
+search_job_button = driver.find_element_by_class_name('jobs-search-box__submit-button')
+search_job_button.click()
+time.sleep(3 + response_delay)
 html = driver.page_source
 print(html)
-sleep(5)
-admi = driver.find_element_by_xpath("//button[@aria-label='Ver solo resultados de Empleos.']")
-admi.click()
-sleep(5)
+time.sleep(3 + response_delay)
 html = driver.page_source
 soup = BeautifulSoup(html, 'lxml')
 container = soup.find('ul', class_ = 'jobs-search-results__list')
