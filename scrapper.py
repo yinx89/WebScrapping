@@ -49,6 +49,8 @@ search_job = driver.find_element_by_class_name('jobs-search-box__text-input')
 time.sleep(3 + response_delay)
 search_job.send_keys('data scientist')
 time.sleep(3 + response_delay)
+location = driver.find_element_by_xpath(
+    "//input[@class='jobs-search-box__text-input']//following::input[2]")
 location.clear()
 time.sleep(3 + response_delay)
 location.send_keys('Worldwide')
