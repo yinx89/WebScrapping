@@ -7,6 +7,7 @@ from time import sleep
 from selenium.webdriver.common.keys import Keys
 import pandas as pd
 import re
+from tqdm import tqdm
 
 def cambia_IP():
     with Controller.from_port(port = 9051) as controlador:
@@ -57,7 +58,14 @@ html = driver.page_source
 sleep(5)
 admi = driver.find_element_by_xpath("//button[@aria-label='Ver solo resultados de Empleos.']")
 admi.click()
-
+sleep(3)
+location = driver.find_element_by_xpath("//input[@class='jobs-search-box__text-input']//following::input[2]")
+location.clear()
+sleep(1)
+location.send_keys('Scotland')
+sleep(1)
+search_job_button = driver.find_element_by_class_name('jobs-search-box__submit-button')
+search_job_button.click()
 sleep(3)
 
 # setting up list for job information
@@ -71,6 +79,12 @@ level = []
 emp_type = []
 functions = []
 industries = []
+solicitudes = []
+empleados = []
+quick_application = []
+emails = []
+visualizaciones = []
+recommendedFlavor = []
 
 html = driver.page_source
 soup = BeautifulSoup(html, 'lxml', from_encoding="utf-8")
@@ -79,24 +93,29 @@ paginas_ul = soup.find("ul", class_='artdeco-pagination__pages--number')
 paginas_li = paginas_ul.find_all("li", class_="artdeco-pagination__indicator--number")
 total_paginas = paginas_li[-1].button.span.text
 
-for pagina in range(1,int(total_paginas)):
+for pagina in tqdm(range(2,int(total_paginas)), desc="Paginas"):
+# for pagina in tqdm(range(2,20), desc="Paginas"):
     
-    # driver.execute_script("document.getElementsByClassName('jobs-search__left-rail')[0].scrollBy();")
-    # driver.execute_script("const i = 0;const item = document.querySelectorAll('.jobs-search-results__list-item')[i];item.forEach(item => {item.scrollIntoView({ behavior: 'smooth', block: 'start' });});")
-    driver.execute_script("const item = document.querySelectorAll('.jobs-search-results__list-item')[0];item.scrollIntoView({ behavior: 'smooth', block: 'start' });")
-    sleep(1)
-    driver.execute_script("const item = document.querySelectorAll('.jobs-search-results__list-item')[5];item.scrollIntoView({ behavior: 'smooth', block: 'start' });")
-    sleep(1)
-    driver.execute_script("const item = document.querySelectorAll('.jobs-search-results__list-item')[10];item.scrollIntoView({ behavior: 'smooth', block: 'start' });")
-    sleep(1)
-    driver.execute_script("const item = document.querySelectorAll('.jobs-search-results__list-item')[15];item.scrollIntoView({ behavior: 'smooth', block: 'start' });")
-    sleep(1)
-    driver.execute_script("const item = document.querySelectorAll('.jobs-search-results__list-item')[20];item.scrollIntoView({ behavior: 'smooth', block: 'start' });")
-    sleep(1)
-    # driver.execute_script("const item = document.querySelectorAll('.jobs-search-results__list-item')[24];item.scrollIntoView({ behavior: 'smooth', block: 'start' });")
-    # sleep(1)
+    jobs_per_page = len(soup.find_all('li',class_="jobs-search-results__list-item"))
     
-    # sleep(20)
+    for i in tqdm(range(0, jobs_per_page-1, 4), desc="Scroll down"):
+        js_string = ("const item = document.querySelectorAll('.jobs-search-results__list-item')[{0}];try{{item.scrollIntoView({{ behavior: 'smooth', block: 'start' }});}}catch(e){{}}").format(i)
+        while True:
+            try:
+                driver.execute_script(js_string) 
+            except TypeError:
+                continue
+            break
+        sleep(2)
+    last_element = "const item = document.querySelectorAll('.artdeco-pagination__indicator--number')[0];try{item.scrollIntoView({ behavior: 'smooth', block: 'start' });}catch(e){}"
+    while True:
+        try:
+            driver.execute_script(last_element) 
+        except TypeError:
+            continue
+        break
+    sleep(1)
+    
     html = driver.page_source
     soup = BeautifulSoup(html, 'lxml', from_encoding="utf-8")
     puestos = soup.find('ul', class_ = 'jobs-search-results__list')
@@ -105,7 +124,7 @@ for pagina in range(1,int(total_paginas)):
     # jobs = soup.findAll(class_ = 'jobs-search-results__list-item')
     
     # for loop for job title, company, id, location and date posted
-    for job in soup.find_all(class_ = 'jobs-search-results__list-item'):
+    for job in tqdm(soup.find_all(class_ = 'jobs-search-results__list-item'), desc="First loop"):
         
         # job title job-card-list__title
         job_titles = job.find("a", class_="job-card-list__title")
@@ -115,10 +134,9 @@ for pagina in range(1,int(total_paginas)):
             post_title.append("None")
         
         # linkedin job id
-        job_ids = job.find('a', href=True)
-        if job_ids is not None:
-            job_ids = job_ids['href']
-            job_ids = re.findall(r'(?!-)([0-9]*)(?=\?)',job_ids)[0]
+        if job_titles is not None:
+            job_ids = job_titles['href']
+            job_ids = re.findall(r'/jobs/view/(\d+)/',job_ids)[0]
             job_id.append(job_ids)
         else:
             job_id.append("None")
@@ -139,16 +157,53 @@ for pagina in range(1,int(total_paginas)):
         
         # posting date soup.find("a",{"class":"Label"})
         post_dates = job.find("time")
-        if post_dates is not None:
-            post_date.append(post_dates.text.strip())
+        if post_dates is not None and post_dates.has_attr('datetime'):
+            post_date.append(post_dates['datetime'])
         else:
             post_date.append("None")
+            
+        quick_application_element = job.find(lambda tag:tag.name=="li" and "Solicitud sencilla" in tag.text)
+        if quick_application_element is not None:
+            quick_application.append(True if quick_application_element.text.strip() == "Solicitud sencilla" else False)
+        else:
+            quick_application.append(False)
+        
+        if job_titles is not None:
+            recommendedFlavor_element = job_titles['href']
+            recommendedFlavor_element = re.findall('[?&]recommendedFlavor=([^&#]+)', recommendedFlavor_element)
+            if len(recommendedFlavor_element) > 0:
+                recommendedFlavor.append(recommendedFlavor_element[0])
+            else:
+                recommendedFlavor.append("None")
+        else:
+            recommendedFlavor.append("None")
 
     # for loop for job description and criterias
-    for x in range(0,len(puestos.find_all('li',class_="jobs-search-results__list-item"))-1):
+    for x in tqdm(range(0,len(soup.find_all(class_ = 'jobs-search-results__list-item'))), desc="Second loop"):
         
+        lista = driver.find_elements_by_class_name("job-card-list__title")
         # clicking on different job containers to view information about the job
-        title = driver.find_elements_by_class_name("job-card-list__title")[x]
+        while (len(soup.find_all(class_ = 'jobs-search-results__list-item')) > len(lista)):
+            for i in tqdm(range(0, jobs_per_page-1, 4), desc="Scroll down"):
+                js_string = ("const item = document.querySelectorAll('.jobs-search-results__list-item')[{0}];try{{item.scrollIntoView({{ behavior: 'smooth', block: 'start' }});}}catch(e){{}}").format(i)
+                while True:
+                    try:
+                        driver.execute_script(js_string) 
+                    except TypeError:
+                        continue
+                    break
+                sleep(2)
+            last_element = "const item = document.querySelectorAll('.artdeco-pagination__indicator--number')[0];try{item.scrollIntoView({ behavior: 'smooth', block: 'start' });}catch(e){}"
+            while True:
+                try:
+                    driver.execute_script(last_element) 
+                except TypeError:
+                    continue
+                break
+            sleep(1)
+            lista = driver.find_elements_by_class_name("job-card-list__title")
+            
+        title = lista[x]
         title.click()
         sleep(3)
         
@@ -158,35 +213,83 @@ for pagina in range(1,int(total_paginas)):
         
         # job description
         description = container.find('span')
-        job_desc.append(description.text.strip())
+        if description is not None:
+            job_desc.append(description.text.strip().replace(';', ':').replace('"', "'"))
+        else:
+            job_desc.append("None")
         
         details = container.find('div',class_='jobs-description-details')
         details_div = details.find_all('div')
         
-        print(len(details_div))
-        # Se puede mejorar revisando el contenido del label principal
-        # y si es X entonces guardar en X, si es Y guardar en Y
-        if len(details_div) == 4:
-            
-            # Seniority level
-            level.append(details_div[0].p.text.strip())
-            
-            # Employment type
-            emp_type.append(details_div[2].p.text.strip())
-            
-            # Job function
-            functions_list_li = details_div[3].ul
-            functions_list = functions_list_li.get_text(', ', strip=True)
-            functions.append(functions_list)
-            
-            # Industries
-            industries_list_li = details_div[1].ul
-            industries_list = industries_list_li.get_text(', ', strip=True)
-            industries.append(industries_list)
+        # Seniority level
+        level_element = soup.find(lambda tag:tag.name=="h3" and "Nivel de experiencia" in tag.text)
+        if level_element is not None:
+            p_level = level_element.find_next('p').contents[0]
+            level.append(str(p_level.string).strip())
+        else:
+            level.append("None")
         
+        # Employment type
+        emp_type_element = soup.find(lambda tag:tag.name=="h3" and "Tipo de empleo" in tag.text)
+        if emp_type_element is not None:
+            p_emp_type = emp_type_element.find_next('p').contents[0]
+            emp_type.append(str(p_emp_type.string).strip())
+        else:
+            emp_type.append("None")    
+        
+        # Job function
+        functions_list_element = soup.find(lambda tag:tag.name=="h3" and ("Funciones laborales" in tag.text or "Función laboral" in tag.text))
+        if functions_list_element is not None:
+            functions_list = functions_list_element.find_next('ul').get_text(', ', strip=True)
+            functions.append(functions_list)
+        else:
+            functions.append("None")  
+        
+        # Industries
+        industries_list_element = soup.find(lambda tag:tag.name=="h3" and ("Sector" in tag.text or "Sectores" in tag.text))
+        if industries_list_element is not None:
+            industries_list = industries_list_element.find_next('ul').get_text(', ', strip=True)
+            industries.append(industries_list)
+        else:
+            industries.append("None")  
+        
+        #ul = soup.find("ul", class_="artdeco-list artdeco-list--border artdeco-list--grid t-12 t-black--light jobs-details-job-summary")
+        solicitudes_element = soup.find(lambda tag:tag.name=="span" and "solicitudes" in tag.text)
+        if solicitudes_element is not None:
+            solicitudes_search = re.search('[0-9]+',solicitudes_element.text.strip())
+            if solicitudes_search is not None:
+                solicitudes.append(int(solicitudes_search.group(0)))
+            else:
+                if soup.find(lambda tag:tag.name=="span" and "Ya no se aceptan solicitudes para este empleo" in tag.text) is not None:
+                    solicitudes.append("Ya no se aceptan solicitudes para este empleo.")
+                else:
+                    solicitudes.append("None")
+        else:
+            solicitudes.append("None")
+        
+        empleados_element = soup.find(lambda tag:tag.name=="span" and "empleados" in tag.text)
+        if empleados_element is not None:
+            empleados.append(empleados_element.text.strip().replace(" empleados",""))
+        else:
+            empleados.append("None")
+            
+        emails_list = re.findall(r'[\w\.-]+@[\w\.-]+', description.text.strip())
+        if emails_list is not None:
+            emails_elements = ", ".join(emails_list)
+            emails.append(emails_elements)
+        else:
+            emails.append("None")
+        
+        visualizaciones_element = soup.find(lambda tag:tag.name=="span" and "visualizaciones" in tag.text)
+        if visualizaciones_element is not None:
+            visualizaciones.append(int(re.search('[0-9]+',visualizaciones_element.text.strip()).group(0)))
+        else:
+            visualizaciones.append("None")
+
         x = x + 1
     
-    next_page = driver.find_elements_by_class_name("artdeco-pagination__indicator--number")[pagina]
+    next_page_string = ("//button[@aria-label='Página {0}']").format(pagina)
+    next_page = driver.find_element_by_xpath(next_page_string)
     next_page.click()
     sleep(3)
     
@@ -200,6 +303,12 @@ print(len(level))
 print(len(emp_type))
 print(len(functions))
 print(len(industries))
+print(len(solicitudes))
+print(len(empleados))
+print(len(quick_application))
+print(len(emails))
+print(len(visualizaciones))
+print(len(recommendedFlavor))
 
 job_data = pd.DataFrame({'Job ID': job_id,
 'Date': post_date,
@@ -210,13 +319,20 @@ job_data = pd.DataFrame({'Job ID': job_id,
 'Level': level,
 'Type': emp_type,
 'Functions': functions,
-'Industries': industries
+'Industries': industries,
+'Solicitudes': solicitudes,
+'Empleados': empleados,
+'Quick Application': quick_application,
+'Emails': emails,
+'Visualizaciones': visualizaciones,
+'Recommended Flavor': recommendedFlavor
 })
 
 job_data['Description'] = job_data['Description'].str.replace('\n',' ')
-job_data.to_csv("clean.csv",encoding='utf-8-sig')
 
-job_data.head()
+job_data.to_csv("clean.csv",encoding='utf-8')
+
+print("Done!")
 
 # LOGIN - Using Tor and changing proxies
 # proxy = my_Proxy("127.0.0.1", 9050)
