@@ -7,6 +7,7 @@ from time import sleep
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import time
 
 def cambia_IP():
     with Controller.from_port(port = 9051) as controlador:
