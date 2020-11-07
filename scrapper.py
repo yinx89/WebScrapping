@@ -4,10 +4,13 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from bs4 import BeautifulSoup
 from time import sleep
-from selenium.webdriver.common.keys import Keys
 import pandas as pd
 import re
 from tqdm import tqdm
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import time
 
 def cambia_IP():
     with Controller.from_port(port = 9051) as controlador:
@@ -26,47 +29,41 @@ def my_Proxy(PROXY_HOST,PROXY_PORT):
     return webdriver.Firefox(options=options, firefox_profile=profile, 
                              executable_path = '/usr/local/bin/geckodriver')
 
+t0 = time.time()
 # LOGIN - Web scrapping usgin normal IP
 driver = webdriver.Firefox(executable_path = '/usr/local/bin/geckodriver')
 driver.get("https://www.linkedin.com")
-sleep(3)
-username = driver.find_element_by_class_name('input__input')
-sleep(3)
+response_delay = time.time() - t0
+time.sleep(2 + response_delay)
+close_cookies = driver.find_element_by_class_name('artdeco-global-alert__dismiss')
+close_cookies.click()
+username = driver.find_element_by_id("session_key")
+time.sleep(2 + response_delay)
 username.send_keys('juanjo.hdicomo@gmail.com')
 password = driver.find_element_by_name('session_password')
-sleep(3)
+time.sleep(3 + response_delay)
 password.send_keys('3240hdicomo_98800')
 log_in_button= driver.find_element_by_class_name('sign-in-form__submit-button')
-sleep(3)
+time.sleep(3 + response_delay)
 log_in_button.click()
-sleep(3)
-# saltar_num = driver.find_element_by_class_name('secondary-action')
-# sleep(3)
-# saltar_num.click()
-# sleep(3)
-# confirm_button = driver.find_element_by_class_name('primary-action-new')
-# sleep(3)
-# confirm_button.click()
-# FIN LOGIN
-# START SEARCHING
-buscar = driver.find_element_by_class_name('search-global-typeahead__input')
-sleep(3)
-buscar.send_keys('data scientist')
-sleep(3)
-buscar.send_keys(Keys.RETURN)
-html = driver.page_source
-sleep(5)
-admi = driver.find_element_by_xpath("//button[@aria-label='Ver solo resultados de Empleos.']")
-admi.click()
-sleep(3)
-location = driver.find_element_by_xpath("//input[@class='jobs-search-box__text-input']//following::input[2]")
+time.sleep(3 + response_delay)
+jobs = WebDriverWait(driver, 10).until(
+    EC.presence_of_element_located((By.ID, "ember26"))) # Explicit wait
+jobs.click()
+time.sleep(3 + response_delay)
+search_job = driver.find_element_by_class_name('jobs-search-box__text-input')
+time.sleep(3 + response_delay)
+search_job.send_keys('data scientist')
+time.sleep(3 + response_delay)
+location = driver.find_element_by_xpath(
+    "//input[@class='jobs-search-box__text-input']//following::input[2]")
 location.clear()
-sleep(1)
-location.send_keys('Scotland')
-sleep(1)
+time.sleep(3 + response_delay)
+location.send_keys('Worldwide')
+time.sleep(3 + response_delay)
 search_job_button = driver.find_element_by_class_name('jobs-search-box__submit-button')
 search_job_button.click()
-sleep(3)
+time.sleep(3 + response_delay)
 
 # setting up list for job information
 job_id = []
@@ -205,7 +202,7 @@ for pagina in tqdm(range(2,int(total_paginas)), desc="Paginas"):
             
         title = lista[x]
         title.click()
-        sleep(3)
+        time.sleep(1 + response_delay)
         
         html = driver.page_source
         soup = BeautifulSoup(html, 'lxml', from_encoding="utf-8")
@@ -291,7 +288,7 @@ for pagina in tqdm(range(2,int(total_paginas)), desc="Paginas"):
     next_page_string = ("//button[@aria-label='Página {0}']").format(pagina)
     next_page = driver.find_element_by_xpath(next_page_string)
     next_page.click()
-    sleep(3)
+    time.sleep(1 + response_delay)
     
 print(len(job_id))
 print(len(post_date))
@@ -333,6 +330,7 @@ job_data['Description'] = job_data['Description'].str.replace('\n',' ')
 job_data.to_csv("clean.csv",encoding='utf-8')
 
 print("Done!")
+
 
 # LOGIN - Using Tor and changing proxies
 # proxy = my_Proxy("127.0.0.1", 9050)
