@@ -201,6 +201,8 @@ def login():
     global response_delay
     response_delay = time.time() - t0
     sleep(2 + response_delay)
+    close_cookies = driver.find_element_by_class_name('artdeco-global-alert__dismiss')
+    close_cookies.click()
     # try:
     #     captcha_string = "//h1[text()[0][contains(., 'Vamos a hacer una comprobación rápida de seguridad')]]"
     #     captcha = driver.find_element_by_xpath(captcha_string)
