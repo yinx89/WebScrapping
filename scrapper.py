@@ -25,7 +25,6 @@ from tqdm import tqdm
 # from stem import Signal
 # from stem.control import Controller
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
 # from selenium.webdriver.firefox.options import Options
 # from selenium.common.exceptions import TimeoutException
 
