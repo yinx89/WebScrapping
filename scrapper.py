@@ -39,6 +39,8 @@ BASE_URL = "https://www.linkedin.com"
 USER_MAIL = "juanjo.hdicomo@gmail.com"
 USER_PASS = "3240hdicomo_98800"
 PATH = "/usr/local/bin/geckodriver"
+PUESTO = "data scientist"
+DONDE = "remote"
 
 def retry_if_fail(fun):
     '''
@@ -200,7 +202,7 @@ def login():
     driver.get(BASE_URL)
     global response_delay
     response_delay = time.time() - t0
-    sleep(2 + response_delay)
+    sleep(3 + response_delay)
     close_cookies = driver.find_element_by_class_name('artdeco-global-alert__dismiss')
     close_cookies.click()
     # try:
@@ -210,17 +212,17 @@ def login():
     #     print("WAIT")
     # finally:
     #     print("No hay captcha!")
-    sleep(2 + response_delay)
+    sleep(3 + response_delay)
     username = driver.find_element_by_class_name('input__input')
-    sleep(2 + response_delay)
+    sleep(3 + response_delay)
     username.send_keys(USER_MAIL)
     password = driver.find_element_by_name('session_password')
-    sleep(2 + response_delay)
+    sleep(3 + response_delay)
     password.send_keys(USER_PASS)
     log_in_button = driver.find_element_by_class_name('sign-in-form__submit-button')
-    sleep(2 + response_delay)
+    sleep(3 + response_delay)
     log_in_button.click()
-    sleep(3)
+    sleep(3 + response_delay)
     return driver
 
 @retry_if_fail
@@ -239,20 +241,20 @@ def search(driver):
         EC.presence_of_element_located((By.ID, "ember26"))) # Explicit wait
     empleos.click()
     buscar_empleo = driver.find_element_by_class_name('jobs-search-box__text-input')
-    sleep(2 + response_delay)
-    buscar_empleo.send_keys('data scientist')
-    sleep(2 + response_delay)
+    sleep(3 + response_delay)
+    buscar_empleo.send_keys(PUESTO)
+    sleep(3 + response_delay)
     lugar = driver.find_element_by_xpath(
         "//input[@class='jobs-search-box__text-input']//following::input[2]")
     lugar.clear()
-    time.sleep(2 + response_delay)
+    sleep(3 + response_delay)
     lugar.clear()
-    time.sleep(2 + response_delay)
-    lugar.send_keys('Remote')
-    time.sleep(2 + response_delay)
+    sleep(3 + response_delay)
+    lugar.send_keys(DONDE)
+    sleep(3 + response_delay)
     boton_buscar_empleo = driver.find_element_by_class_name('jobs-search-box__submit-button')
     boton_buscar_empleo.click()
-    time.sleep(3 + response_delay)
+    sleep(3 + response_delay)
 
 @retry_if_fail
 def get_soup_from_page(driver):
