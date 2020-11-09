@@ -16,24 +16,23 @@ It should serve as a quick reference to all the functions and arguments.
 import re
 import functools
 import sys
+import time
 from time import sleep
 
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 from tqdm import tqdm
-# from stem import Signal
-# from stem.control import Controller
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
-# from selenium.webdriver.firefox.options import Options
-# from selenium.common.exceptions import TimeoutException
 
 
 MAX_DELAY = 10
 BASE_URL = "https://www.linkedin.com"
 USER_MAIL = "juanjo.hdicomo@gmail.com"
 USER_PASS = "3240hdicomo_98800"
+DESIRED_JOB = "data scientist"
+LOCATION = "Remote"
 PATH = "/usr/local/bin/geckodriver"
 
 def retry_if_fail(fun):
@@ -62,7 +61,7 @@ def retry_if_fail(fun):
 
 class Information():
     """
-    Clase para las columnas.
+    A class to represent a person.
 
     ...
 
@@ -110,10 +109,11 @@ class Information():
             age : int
                 age of the person
         """
+
     @retry_if_fail
     def print_length(self):
         """
-        Muestra el tamaño de cada columna.
+        Prints the person's name and age.
 
         If the argument 'additional' is passed, then it is appended after the main info.
 
@@ -146,7 +146,7 @@ class Information():
     @retry_if_fail
     def save_file(self):
         """
-        Guarda los datos en un archivo csv..
+        Prints the person's name and age.
 
         If the argument 'additional' is passed, then it is appended after the main info.
 
@@ -186,7 +186,11 @@ class Information():
 @retry_if_fail
 def login():
     '''
-    Inicia sesión en la página web.
+    Returns the sum of two decimal numbers in binary digits.
+
+            Parameters:
+                    a (int): A decimal integer
+                    b (int): Another decimal integer
 
             Returns:
                     binary_sum (str): Binary string of the sum of a and b
@@ -196,14 +200,6 @@ def login():
     driver.get(BASE_URL)
     global response_delay
     response_delay = time.time() - t0
-    sleep(2 + response_delay)
-    # try:
-    #     captcha_string = "//h1[text()[0][contains(., 'Vamos a hacer una comprobación rápida de seguridad')]]"
-    #     captcha = driver.find_element_by_xpath(captcha_string)
-    # except:
-    #     print("WAIT")
-    # finally:
-    #     print("No hay captcha!")
     sleep(2 + response_delay)
     username = driver.find_element_by_class_name('input__input')
     sleep(2 + response_delay)
@@ -220,38 +216,39 @@ def login():
 @retry_if_fail
 def search(driver):
     '''
-    Busca los empleos.
+    Returns the sum of two decimal numbers in binary digits.
 
-            Parameter:
-                    driver
+            Parameters:
+                    a (int): A decimal integer
+                    b (int): Another decimal integer
 
             Returns:
                     binary_sum (str): Binary string of the sum of a and b
     '''
-    
-    empleos = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.ID, "ember26"))) # Explicit wait
-    empleos.click()
-    buscar_empleo = driver.find_element_by_class_name('jobs-search-box__text-input')
-    sleep(2 + response_delay)
-    buscar_empleo.send_keys('data scientist')
-    sleep(2 + response_delay)
-    lugar = driver.find_element_by_xpath(
-        "//input[@class='jobs-search-box__text-input']//following::input[2]")
-    lugar.clear()
-    time.sleep(2 + response_delay)
-    lugar.clear()
-    time.sleep(2 + response_delay)
-    lugar.send_keys('Remote')
-    time.sleep(2 + response_delay)
-    boton_buscar_empleo = driver.find_element_by_class_name('jobs-search-box__submit-button')
-    boton_buscar_empleo.click()
-    time.sleep(3 + response_delay)
+    buscar = driver.find_element_by_class_name('search-global-typeahead__input')
+    sleep(3)
+    buscar.send_keys(DESIRED_JOB)
+    sleep(3)
+    buscar.send_keys(Keys.RETURN)
+    sleep(5)
+    admi = driver.find_element_by_xpath("//button[@aria-label='Ver solo resultados de Empleos.']")
+    admi.click()
+    sleep(3)
+    location = driver.find_element_by_xpath(
+        "//input[@class='jobs-search-box__text-input']//following::input[2]"
+        )
+    location.clear()
+    sleep(1)
+    location.send_keys(LOCATION)
+    sleep(1)
+    search_job_button = driver.find_element_by_class_name('jobs-search-box__submit-button')
+    search_job_button.click()
+    sleep(3)
 
 @retry_if_fail
 def get_soup_from_page(driver):
     '''
-    Devuelve el HTML parseado.
+    Returns the sum of two decimal numbers in binary digits.
 
             Parameters:
                     a (int): A decimal integer
@@ -267,7 +264,7 @@ def get_soup_from_page(driver):
 @retry_if_fail
 def scroll_down(driver, jobs_per_page):
     '''
-    Baja en los resultados de la búsqueda.
+    Returns the sum of two decimal numbers in binary digits.
 
             Parameters:
                     a (int): A decimal integer
@@ -321,7 +318,7 @@ def search_list_title(query, data):
 @retry_if_fail
 def search_company_names(query, data):
     '''
-    Busca y añade el nombre de cada empresa.
+    Returns the sum of two decimal numbers in binary digits.
 
             Parameters:
                     a (int): A decimal integer
@@ -339,7 +336,7 @@ def search_company_names(query, data):
 @retry_if_fail
 def search_job_locations(query, data):
     '''
-    Busca y añade la ubicación del trabajo.
+    Returns the sum of two decimal numbers in binary digits.
 
             Parameters:
                     a (int): A decimal integer
@@ -357,7 +354,7 @@ def search_job_locations(query, data):
 @retry_if_fail
 def search_post_dates(query, data):
     '''
-    Busca y añade la fecha de la oferta de empleo.
+    Returns the sum of two decimal numbers in binary digits.
 
             Parameters:
                     a (int): A decimal integer
@@ -375,7 +372,7 @@ def search_post_dates(query, data):
 @retry_if_fail
 def search_quick_application(query, data):
     '''
-    Busca si la oferta tiene solicitud sencilla.
+    Returns the sum of two decimal numbers in binary digits.
 
             Parameters:
                     a (int): A decimal integer
@@ -395,7 +392,7 @@ def search_quick_application(query, data):
 @retry_if_fail
 def search_description(query, data):
     '''
-    Busca y añade la descripción de la oferta de empleo.
+    Returns the sum of two decimal numbers in binary digits.
 
             Parameters:
                     a (int): A decimal integer
@@ -405,7 +402,7 @@ def search_description(query, data):
                     binary_sum (str): Binary string of the sum of a and b
     '''
     if query is not None:
-        data.job_desc.append(query.text.strip().replace(';', ':').replace('"', "'"))
+        data.job_desc.append(query.text.replace("\n"," ").replace("\t"," ").replace(';', ':').replace('"', "'"))
     else:
         data.job_desc.append("None")
     return data
@@ -413,7 +410,7 @@ def search_description(query, data):
 @retry_if_fail
 def search_level(query, data):
     '''
-    Busca y añade el nivel del puesto ofertado.
+    Returns the sum of two decimal numbers in binary digits.
 
             Parameters:
                     a (int): A decimal integer
@@ -432,7 +429,7 @@ def search_level(query, data):
 @retry_if_fail
 def search_emp_type(query, data):
     '''
-    Busca y añade el tipo de empresa.
+    Returns the sum of two decimal numbers in binary digits.
 
             Parameters:
                     a (int): A decimal integer
@@ -451,7 +448,7 @@ def search_emp_type(query, data):
 @retry_if_fail
 def search_functions(query, data):
     '''
-    Busca y añade las funciones del puesto ofertado.
+    Returns the sum of two decimal numbers in binary digits.
 
             Parameters:
                     a (int): A decimal integer
@@ -470,7 +467,7 @@ def search_functions(query, data):
 @retry_if_fail
 def search_industries(query, data):
     '''
-    Busca y añade el sector.
+    Returns the sum of two decimal numbers in binary digits.
 
             Parameters:
                     a (int): A decimal integer
@@ -514,7 +511,7 @@ def search_solicitudes(query, no_sol_query, data):
 @retry_if_fail
 def search_empleados(query, data):
     '''
-    Busca y añade el número de empleados de la empresa.
+    Returns the sum of two decimal numbers in binary digits.
 
             Parameters:
                     a (int): A decimal integer
@@ -532,7 +529,7 @@ def search_empleados(query, data):
 @retry_if_fail
 def search_emails(query, data):
     '''
-    Busca y añade el email de contacto.
+    Returns the sum of two decimal numbers in binary digits.
 
             Parameters:
                     a (int): A decimal integer
@@ -572,7 +569,7 @@ def search_visualizaciones(query, data):
 @retry_if_fail
 def search_information(driver):
     '''
-    Search and get the information from the results.
+    Returns the sum of two decimal numbers in binary digits.
 
             Parameters:
                     a (int): A decimal integer
@@ -589,7 +586,7 @@ def search_information(driver):
     paginas_li = paginas_ul.find_all("li", class_="artdeco-pagination__indicator--number")
     total_paginas = paginas_li[-1].button.span.text
 
-    for pagina in tqdm(range(2, int(total_paginas)+2), desc="Paginas"):
+    for pagina in tqdm(range(2, int(total_paginas)+1), desc="Paginas"):
         jobs_per_page = len(soup.find_all('li', class_="jobs-search-results__list-item"))
         scroll_down(driver, jobs_per_page)
         soup = get_soup_from_page(driver)
@@ -608,15 +605,13 @@ def search_information(driver):
                 range(0, len(soup.find_all(
                     class_='jobs-search-results__list-item'))), desc="Second loop"):
 
-            lista = WebDriverWait(driver, 10).until(
-                EC.presence_of_all_elements_located((By.CLASS_NAME, "job-card-list__title"))) # Explicit wait
+            lista = driver.find_elements_by_class_name("job-card-list__title")
             while len(soup.find_all(class_='jobs-search-results__list-item')) > len(lista):
                 scroll_down(driver, jobs_per_page)
-                lista = WebDriverWait(driver, 10).until(
-                    EC.presence_of_all_elements_located((By.CLASS_NAME, "job-card-list__title"))) # Explicit wait
+                lista = driver.find_elements_by_class_name("job-card-list__title")
             title = lista[result]
             title.click()
-            time.sleep(1 + response_delay)
+            sleep(3)
 
             soup = get_soup_from_page(driver)
             container = soup.find("div", class_='jobs-description-content__text')
@@ -638,7 +633,7 @@ def search_information(driver):
                     and "Ya no se aceptan solicitudes para este empleo"
                     in tag.text), data)
             data = search_empleados(soup.find(
-                lambda tag: tag.name == "span" and "empleados" in tag.text), data)
+                lambda tag: tag.name == "span" and "empleados" in tag.text and tag.previousSibling.name == "li"), data)
             data = search_emails(re.findall(r'[\w\.-]+@[\w\.-]+', container.find('span').text.strip()), data)
             data = search_visualizaciones(soup.find(
                 lambda tag: tag.name == "span" and "visualizaciones" in tag.text), data)
@@ -648,7 +643,7 @@ def search_information(driver):
         next_page_string = ("//button[@aria-label='Página {0}']").format(pagina)
         next_page = driver.find_element_by_xpath(next_page_string)
         next_page.click()
-        time.sleep(1 + response_delay)
+        sleep(3)
 
     return data
 
