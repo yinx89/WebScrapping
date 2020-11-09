@@ -34,8 +34,8 @@ from selenium.webdriver.common.keys import Keys
 
 MAX_DELAY = 10
 BASE_URL = "https://www.linkedin.com"
-USER_MAIL = "juanjo.hdicomo@gmail.com"
-USER_PASS = "3240hdicomo_98800"
+USER_MAIL = "*********"
+USER_PASS = "*********"
 DESIRED_JOB = "data scientist"
 LOCATION = "Scotland"
 PATH = "/usr/local/bin/geckodriver"
