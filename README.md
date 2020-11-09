@@ -7,7 +7,7 @@ En este espacio presentamos la primera práctica de la asignatura "Tipología y 
 
 Mediante la utilización de técnicas de web scraping se ha obtenido la información relevante de las ofertas de empleo para data scientist publicadas en Linkedin. Para ello se ha usado el lenguaje de programación Python y las librerías más relevantes han sido Beautiful Soup y Selenium.
 
-[![imagen descriptiva](https://i.imgur.com/TjdhPWw.png)]
+![imagen descriptiva](https://i.imgur.com/TjdhPWw.png)
 
 
 ### Miembros del equipo de trabajo:
@@ -19,7 +19,7 @@ Mediante la utilización de técnicas de web scraping se ha obtenido la informac
 ### Ficheros:
 
 * scrapper.py: programa para la obtención de los datos
-* datasets: 
+* dataset: 
     - Remote.csv: datos de las ofertas de empleo para trabajar en remoto
     - Scotland.csv: datos de las ofertas de empleo para trabajar en Escocia
     - Spain.csv: datos de las ofertas de empleo para trabajar en España
