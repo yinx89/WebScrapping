@@ -197,7 +197,10 @@ def login():
             Returns:
                     binary_sum (str): Binary string of the sum of a and b
     '''
-    driver = webdriver.Firefox(executable_path=PATH)
+    profile = webdriver.FirefoxProfile()
+    profile.set_preference("general.useragent.override", 
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:82.0) Gecko/20100101 Firefox/82.0")
+    driver = webdriver.Firefox(firefox_profile=profile, executable_path=PATH)
     t0 = time.time()
     driver.get(BASE_URL)
     global response_delay
