@@ -7,77 +7,112 @@ Created on Oct-Nov 2020
 
 Usage: scrapper.py
 
-The docstrings for Python script should document the script's functions and command-line
-syntax as a usable message.
+Este script obtiene los resultados de búsqueda según un puesto de trabajo concreto
+en un lugar concreto. Los resultados de la búsqueda son limitados a 40 páginas
+(ordenados por relevancia). Se deberá utilizar una cuenta de LinkedIn a través
+de un usuario y contraseña. El propio script tiene una función que reintenta la
+ejecución de las funciones propensas a error y se aplican otras técnicas
+como el cambio del UserAgent. Finalmente el archivo generado en la raiz del
+proyecto tiene como nombre "results.csv".
 
-It should serve as a quick reference to all the functions and arguments.
 """
 
 import re
 import functools
 import sys
+import time
 from time import sleep
 
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 from tqdm import tqdm
-# from stem import Signal
-# from stem.control import Controller
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
-# from selenium.webdriver.firefox.options import Options
-# from selenium.common.exceptions import TimeoutException
+# from fake_useragent import UserAgent
 
 
 MAX_DELAY = 10
 BASE_URL = "https://www.linkedin.com"
 USER_MAIL = "juanjo.hdicomo@gmail.com"
 USER_PASS = "3240hdicomo_98800"
+DESIRED_JOB = "data scientist"
+LOCATION = "Scotland"
+PATH = "/usr/local/bin/geckodriver"
 
-def retry_if_fail(fun):
+
+def retry_if_error(fun):
     '''
-    Returns the sum of two decimal numbers in binary digits.
+    Esta función utiliza el decorador @retry_if_error para comprobar si hay
+    un error en cada una de las funciones. Lo primero que se realiza es un cambio
+    de UserAgent y posteriormente se aplican retardos automáticos y proporcionales.
 
             Parameters:
-                    a (int): A decimal integer
-                    b (int): Another decimal integer
+                    fun (function): Cualquier función con el decorador
 
             Returns:
-                    binary_sum (str): Binary string of the sum of a and b
+                    wrapper: Ejecución de métodos para reintentarlo
     '''
     @functools.wraps(fun)
     def wrapper(*args, **kwargs):
-        delay = 0
+        auto_delay = 0
         while True:
-            sleep(delay)
+            sleep(auto_delay)
             try:
                 return fun(*args, **kwargs)
             except requests.exceptions.RequestException:
-                print("Error on request, applying delay", file=sys.stderr)
-                delay = min(delay + 1, MAX_DELAY)
+                print("ERROR - Applying delay", file=sys.stderr)
+                auto_delay = min(auto_delay + 1, MAX_DELAY)
                 continue
     return wrapper
 
 class Information():
     """
-    A class to represent a person.
+    Clase que representan las variables de las observaciones en listas.
 
     ...
 
     Attributes
     ----------
-    name : str
-        first name of the person
-    surname : str
-        family name of the person
-    age : int
-        age of the person
+    job_id : list
+        id de la oferta
+    post_title : list
+        titulo de la oferta
+    company_name : list
+        compañia de la oferta
+    post_date : list
+        fecha de publicación
+    job_location : list
+        localización de la oferta
+    job_desc : list
+        descripción del trabajo
+    level : list
+        nivel de experiencia
+    emp_type : list
+        tipo de empleo
+    functions : list
+        funciones del trabajo
+    industries : list
+        industrias involucradas
+    solicitudes : list
+        numero de solicitudes
+    empleados : list
+        número de empleados de la compañía
+    quick_application : list
+        aplicación rápida o no
+    emails : list
+        emails asociados a la oferta
+    visualizaciones : list
+        visualizaciones totales de la oferta
+    recommendedFlavor : list
+        tipo de oferta
 
     Methods
     -------
-    info(additional=""):
-        Prints the person's name and age.
+    print_length():
+        Imprime las longitudes de las listas
+    save_file():
+        Obtiene el pandas Dataframe y lo guarda como .csv
     """
     job_id = []
     post_title = []
@@ -98,32 +133,13 @@ class Information():
 
     def __init__(self):
         """
-        Constructs all the necessary attributes for the person object.
-
-        Parameters
-        ----------
-            name : str
-                first name of the person
-            surname : str
-                family name of the person
-            age : int
-                age of the person
+        Constructor de la clase
         """
-    @retry_if_fail
+
+    @retry_if_error
     def print_length(self):
         """
-        Prints the person's name and age.
-
-        If the argument 'additional' is passed, then it is appended after the main info.
-
-        Parameters
-        ----------
-        additional : str, optional
-            More info to be displayed (default is None)
-
-        Returns
-        -------
-        None
+        Imprime las longitudes de las listas
         """
         print(len(self.job_id))
         print(len(self.post_date))
@@ -142,21 +158,10 @@ class Information():
         print(len(self.visualizaciones))
         print(len(self.recommendedFlavor))
 
-    @retry_if_fail
+    @retry_if_error
     def save_file(self):
         """
-        Prints the person's name and age.
-
-        If the argument 'additional' is passed, then it is appended after the main info.
-
-        Parameters
-        ----------
-        additional : str, optional
-            More info to be displayed (default is None)
-
-        Returns
-        -------
-        None
+        Obtiene el pandas Dataframe y lo guarda como .csv
         """
         job_data = pd.DataFrame(
             {
@@ -179,59 +184,68 @@ class Information():
                 })
 
         job_data['Description'] = job_data['Description'].str.replace('\n', ' ')
-        job_data.to_csv("clean.csv", encoding='utf-8-sig')
+        job_data.to_csv("results.csv", encoding='utf-8-sig')
         print("Done!")
 
-@retry_if_fail
-def login():
+def set_useragent():
     '''
-    Returns the sum of two decimal numbers in binary digits.
+    Establece el UserAgent de Firefox a través del perfil.
+    Se podría utilizar tambien para cambiar el UserAgent pero no nos ha causado
+    problemas.
 
             Parameters:
-                    a (int): A decimal integer
-                    b (int): Another decimal integer
+                    useragent (UserAgent()): Fake UserAgent
+                    driver (webdriver.Firefox()): Driver
 
             Returns:
-                    binary_sum (str): Binary string of the sum of a and b
+                    driver (webdriver.Firefox()): new Driver
     '''
-    driver = webdriver.Firefox(executable_path='/usr/local/bin/geckodriver')
+    # useragent = UserAgent()
+    profile = webdriver.FirefoxProfile()
+    profile.set_preference("general.useragent.override",
+                           "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:82.0) Gecko/20100101 Firefox/82.0")
+    # profile.set_preference("general.useragent.override", useragent.random)
+    driver = webdriver.Firefox(firefox_profile=profile, executable_path=PATH)
+    # print(driver.execute_script("return navigator.userAgent"))
+    return driver
+
+@retry_if_error
+def login():
+    '''
+    Proceso de login de usuario. Se utilizan esperas implícitas.
+
+            Returns:
+                    driver (webdriver.Firefox()): Driver
+    '''
+    driver = set_useragent()
+    response_delay = 0
+    first_t = time.time()
     driver.get(BASE_URL)
-    sleep(3)
-    # try:
-    #     captcha_string = "//h1[text()[0][contains(., 'Vamos a hacer una comprobación rápida de seguridad')]]"
-    #     captcha = driver.find_element_by_xpath(captcha_string)
-    # except:
-    #     print("WAIT")
-    # finally:
-    #     print("No hay captcha!")
-    sleep(3)
+    response_delay = time.time() - first_t
+    sleep(2 + response_delay)
     username = driver.find_element_by_class_name('input__input')
-    sleep(3)
+    sleep(2 + response_delay)
     username.send_keys(USER_MAIL)
     password = driver.find_element_by_name('session_password')
-    sleep(3)
+    sleep(2 + response_delay)
     password.send_keys(USER_PASS)
     log_in_button = driver.find_element_by_class_name('sign-in-form__submit-button')
-    sleep(3)
+    sleep(2 + response_delay)
     log_in_button.click()
     sleep(3)
     return driver
 
-@retry_if_fail
+@retry_if_error
 def search(driver):
     '''
-    Returns the sum of two decimal numbers in binary digits.
+    Proceso de búsqueda de resultados en la web.
 
             Parameters:
-                    a (int): A decimal integer
-                    b (int): Another decimal integer
-
-            Returns:
-                    binary_sum (str): Binary string of the sum of a and b
+                    driver (webdriver.Firefox()): Driver
     '''
     buscar = driver.find_element_by_class_name('search-global-typeahead__input')
     sleep(3)
-    buscar.send_keys('data scientist')
+    buscar.send_keys(DESIRED_JOB)
     sleep(3)
     buscar.send_keys(Keys.RETURN)
     sleep(5)
@@ -243,39 +257,35 @@ def search(driver):
         )
     location.clear()
     sleep(1)
-    location.send_keys('Remote')
+    location.send_keys(LOCATION)
     sleep(1)
     search_job_button = driver.find_element_by_class_name('jobs-search-box__submit-button')
     search_job_button.click()
     sleep(3)
 
-@retry_if_fail
+@retry_if_error
 def get_soup_from_page(driver):
     '''
-    Returns the sum of two decimal numbers in binary digits.
+    Obtiene el objeto BeautifulSoup para poder analizarlo posteriormente.
 
             Parameters:
-                    a (int): A decimal integer
-                    b (int): Another decimal integer
+                    driver (webdriver.Firefox()): Driver
 
             Returns:
-                    binary_sum (str): Binary string of the sum of a and b
+                    soup (BeautifulSoup()): BS object
     '''
     html = driver.page_source
     soup = BeautifulSoup(html, 'lxml', from_encoding="utf-8")
     return soup
 
-@retry_if_fail
+@retry_if_error
 def scroll_down(driver, jobs_per_page):
     '''
-    Returns the sum of two decimal numbers in binary digits.
+    Realiza scroll-down en grupos de resultados de 4 elementos
+    hasta llegar a los elementos de Pagination con JavaScript.
 
             Parameters:
-                    a (int): A decimal integer
-                    b (int): Another decimal integer
-
-            Returns:
-                    binary_sum (str): Binary string of the sum of a and b
+                    driver (webdriver.Firefox()): Driver
     '''
     for i in tqdm(range(0, jobs_per_page-1, 4), desc="Scroll down"):
         js_string = ("const item = document.querySelectorAll('.jobs-search-results__list-item')[{0}];try{{item.scrollIntoView({{ behavior: 'smooth', block: 'start' }});}}catch(e){{}}").format(i)
@@ -285,17 +295,17 @@ def scroll_down(driver, jobs_per_page):
     driver.execute_script(last_element)
     sleep(1)
 
-@retry_if_fail
+@retry_if_error
 def search_list_title(query, data):
     '''
-    Returns the sum of two decimal numbers in binary digits.
+    Búsqueda en el elemento title.
 
             Parameters:
-                    a (int): A decimal integer
-                    b (int): Another decimal integer
+                    query (BS query): Consulta para obtener el elemento
+                    data (Information()): resultados
 
             Returns:
-                    binary_sum (str): Binary string of the sum of a and b
+                    data (Information()): resultados
     '''
     if query is not None:
         data.post_title.append(query.text.strip())
@@ -319,17 +329,17 @@ def search_list_title(query, data):
         data.recommendedFlavor.append("None")
     return data
 
-@retry_if_fail
+@retry_if_error
 def search_company_names(query, data):
     '''
-    Returns the sum of two decimal numbers in binary digits.
+    Búsqueda del nombre de la compañia
 
             Parameters:
-                    a (int): A decimal integer
-                    b (int): Another decimal integer
+                    query (BS query): Consulta para obtener el elemento
+                    data (Information()): resultados
 
             Returns:
-                    binary_sum (str): Binary string of the sum of a and b
+                    data (Information()): resultados
     '''
     if query is not None:
         data.company_name.append(query.text.strip())
@@ -337,17 +347,17 @@ def search_company_names(query, data):
         data.company_name.append("None")
     return data
 
-@retry_if_fail
+@retry_if_error
 def search_job_locations(query, data):
     '''
-    Returns the sum of two decimal numbers in binary digits.
+    Búsqueda de la localización
 
             Parameters:
-                    a (int): A decimal integer
-                    b (int): Another decimal integer
+                    query (BS query): Consulta para obtener el elemento
+                    data (Information()): resultados
 
             Returns:
-                    binary_sum (str): Binary string of the sum of a and b
+                    data (Information()): resultados
     '''
     if query is not None:
         data.job_location.append(query.text.strip())
@@ -355,17 +365,17 @@ def search_job_locations(query, data):
         data.job_location.append("None")
     return data
 
-@retry_if_fail
+@retry_if_error
 def search_post_dates(query, data):
     '''
-    Returns the sum of two decimal numbers in binary digits.
+    Búsqueda de la fecha de publicación
 
             Parameters:
-                    a (int): A decimal integer
-                    b (int): Another decimal integer
+                    query (BS query): Consulta para obtener el elemento
+                    data (Information()): resultados
 
             Returns:
-                    binary_sum (str): Binary string of the sum of a and b
+                    data (Information()): resultados
     '''
     if query is not None and query.has_attr('datetime'):
         data.post_date.append(query['datetime'])
@@ -373,17 +383,17 @@ def search_post_dates(query, data):
         data.post_date.append("None")
     return data
 
-@retry_if_fail
+@retry_if_error
 def search_quick_application(query, data):
     '''
-    Returns the sum of two decimal numbers in binary digits.
+    Búsqueda si hay botón Quick Application
 
             Parameters:
-                    a (int): A decimal integer
-                    b (int): Another decimal integer
+                    query (BS query): Consulta para obtener el elemento
+                    data (Information()): resultados
 
             Returns:
-                    binary_sum (str): Binary string of the sum of a and b
+                    data (Information()): resultados
     '''
     if query is not None:
         data.quick_application.append(
@@ -393,35 +403,37 @@ def search_quick_application(query, data):
         data.quick_application.append(False)
     return data
 
-@retry_if_fail
+@retry_if_error
 def search_description(query, data):
     '''
-    Returns the sum of two decimal numbers in binary digits.
+    Obtención de la descripción
 
             Parameters:
-                    a (int): A decimal integer
-                    b (int): Another decimal integer
+                    query (BS query): Consulta para obtener el elemento
+                    data (Information()): resultados
 
             Returns:
-                    binary_sum (str): Binary string of the sum of a and b
+                    data (Information()): resultados
     '''
     if query is not None:
+        # Dos métodos, haciendo replace() o strip()
+        # data.job_desc.append(query.text.replace("\n"," ").replace("\t"," ").replace(';', ':').replace('"', "'"))
         data.job_desc.append(query.text.strip().replace(';', ':').replace('"', "'"))
     else:
         data.job_desc.append("None")
     return data
 
-@retry_if_fail
+@retry_if_error
 def search_level(query, data):
     '''
-    Returns the sum of two decimal numbers in binary digits.
+    Búsqueda del nivel de la oferta
 
             Parameters:
-                    a (int): A decimal integer
-                    b (int): Another decimal integer
+                    query (BS query): Consulta para obtener el elemento
+                    data (Information()): resultados
 
             Returns:
-                    binary_sum (str): Binary string of the sum of a and b
+                    data (Information()): resultados
     '''
     if query is not None:
         p_level = query.find_next('p').contents[0]
@@ -430,17 +442,17 @@ def search_level(query, data):
         data.level.append("None")
     return data
 
-@retry_if_fail
+@retry_if_error
 def search_emp_type(query, data):
     '''
-    Returns the sum of two decimal numbers in binary digits.
+    Búsqueda del tipo de empleo
 
             Parameters:
-                    a (int): A decimal integer
-                    b (int): Another decimal integer
+                    query (BS query): Consulta para obtener el elemento
+                    data (Information()): resultados
 
             Returns:
-                    binary_sum (str): Binary string of the sum of a and b
+                    data (Information()): resultados
     '''
     if query is not None:
         p_emp_type = query.find_next('p').contents[0]
@@ -449,17 +461,17 @@ def search_emp_type(query, data):
         data.emp_type.append("None")
     return data
 
-@retry_if_fail
+@retry_if_error
 def search_functions(query, data):
     '''
-    Returns the sum of two decimal numbers in binary digits.
+    Búsqueda de las funciones de la oferta
 
             Parameters:
-                    a (int): A decimal integer
-                    b (int): Another decimal integer
+                    query (BS query): Consulta para obtener el elemento
+                    data (Information()): resultados
 
             Returns:
-                    binary_sum (str): Binary string of the sum of a and b
+                    data (Information()): resultados
     '''
     if query is not None:
         functions_list = query.find_next('ul').get_text(', ', strip=True)
@@ -468,17 +480,17 @@ def search_functions(query, data):
         data.functions.append("None")
     return data
 
-@retry_if_fail
+@retry_if_error
 def search_industries(query, data):
     '''
-    Returns the sum of two decimal numbers in binary digits.
+    Búsqueda de las industrias
 
             Parameters:
-                    a (int): A decimal integer
-                    b (int): Another decimal integer
+                    query (BS query): Consulta para obtener el elemento
+                    data (Information()): resultados
 
             Returns:
-                    binary_sum (str): Binary string of the sum of a and b
+                    data (Information()): resultados
     '''
     if query is not None:
         industries_list = query.find_next('ul').get_text(', ', strip=True)
@@ -487,17 +499,18 @@ def search_industries(query, data):
         data.industries.append("None")
     return data
 
-@retry_if_fail
+@retry_if_error
 def search_solicitudes(query, no_sol_query, data):
     '''
-    Returns the sum of two decimal numbers in binary digits.
+    Búsqueda del número de solicitudes
 
             Parameters:
-                    a (int): A decimal integer
-                    b (int): Another decimal integer
+                    query (BS query): Consulta para obtener el elemento
+                    no_sol_query(BS query): Consulta si no se aceptan aplicaciones
+                    data (Information()): resultados
 
             Returns:
-                    binary_sum (str): Binary string of the sum of a and b
+                    data (Information()): resultados
     '''
     if query is not None:
         solicitudes_search = re.search('[0-9]+', query.text.strip())
@@ -512,17 +525,17 @@ def search_solicitudes(query, no_sol_query, data):
         data.solicitudes.append("None")
     return data
 
-@retry_if_fail
+@retry_if_error
 def search_empleados(query, data):
     '''
-    Returns the sum of two decimal numbers in binary digits.
+    Obtención del número de empleados de la compañía
 
             Parameters:
-                    a (int): A decimal integer
-                    b (int): Another decimal integer
+                    query (BS query): Consulta para obtener el elemento
+                    data (Information()): resultados
 
             Returns:
-                    binary_sum (str): Binary string of the sum of a and b
+                    data (Information()): resultados
     '''
     if query is not None:
         data.empleados.append(query.text.strip().replace(" empleados", ""))
@@ -530,17 +543,17 @@ def search_empleados(query, data):
         data.empleados.append("None")
     return data
 
-@retry_if_fail
+@retry_if_error
 def search_emails(query, data):
     '''
-    Returns the sum of two decimal numbers in binary digits.
+    Obtiene si hay direcciones de correo en la descripción
 
             Parameters:
-                    a (int): A decimal integer
-                    b (int): Another decimal integer
+                    query (BS query): Consulta para obtener el elemento
+                    data (Information()): resultados
 
             Returns:
-                    binary_sum (str): Binary string of the sum of a and b
+                    data (Information()): resultados
     '''
     if query is not None:
         emails_elements = ", ".join(query)
@@ -549,17 +562,17 @@ def search_emails(query, data):
         data.emails.append("None")
     return data
 
-@retry_if_fail
+@retry_if_error
 def search_visualizaciones(query, data):
     '''
-    Returns the sum of two decimal numbers in binary digits.
+    Obtiene el número de visualizaciones totales de la oferta
 
             Parameters:
-                    a (int): A decimal integer
-                    b (int): Another decimal integer
+                    query (BS query): Consulta para obtener el elemento
+                    data (Information()): resultados
 
             Returns:
-                    binary_sum (str): Binary string of the sum of a and b
+                    data (Information()): resultados
     '''
     if query is not None:
         data.visualizaciones.append(
@@ -570,17 +583,18 @@ def search_visualizaciones(query, data):
     return data
 
 
-@retry_if_fail
+@retry_if_error
 def search_information(driver):
     '''
-    Returns the sum of two decimal numbers in binary digits.
+    Se le pasa el driver y se obtienen los resultados de la búsqueda. Es la función
+    core del script, en ella se van estableciendo los tiempos, se van iterando
+    los bucles y es desde la que parten todas las acciones.
 
             Parameters:
-                    a (int): A decimal integer
-                    b (int): Another decimal integer
+                    driver (webdriver.Firefox()): Driver
 
             Returns:
-                    binary_sum (str): Binary string of the sum of a and b
+                    data (Information()): resultados de la búsqueda
     '''
     data = Information()
 
@@ -590,7 +604,7 @@ def search_information(driver):
     paginas_li = paginas_ul.find_all("li", class_="artdeco-pagination__indicator--number")
     total_paginas = paginas_li[-1].button.span.text
 
-    for pagina in tqdm(range(2, int(total_paginas)+2), desc="Paginas"):
+    for pagina in tqdm(range(2, int(total_paginas)+1), desc="Paginas"):
         jobs_per_page = len(soup.find_all('li', class_="jobs-search-results__list-item"))
         scroll_down(driver, jobs_per_page)
         soup = get_soup_from_page(driver)
@@ -637,7 +651,7 @@ def search_information(driver):
                     and "Ya no se aceptan solicitudes para este empleo"
                     in tag.text), data)
             data = search_empleados(soup.find(
-                lambda tag: tag.name == "span" and "empleados" in tag.text), data)
+                lambda tag: tag.name == "span" and "empleados" in tag.text and tag.previousSibling.name == "li"), data)
             data = search_emails(re.findall(r'[\w\.-]+@[\w\.-]+', container.find('span').text.strip()), data)
             data = search_visualizaciones(soup.find(
                 lambda tag: tag.name == "span" and "visualizaciones" in tag.text), data)
@@ -653,14 +667,7 @@ def search_information(driver):
 
 def main():
     '''
-    Returns the sum of two decimal numbers in binary digits.
-
-            Parameters:
-                    a (int): A decimal integer
-                    b (int): Another decimal integer
-
-            Returns:
-                    binary_sum (str): Binary string of the sum of a and b
+    Función principal. Desde ella comienza el script y establece los pasos.
     '''
     driver = login()
     search(driver)
