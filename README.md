@@ -9,7 +9,6 @@ Mediante la utilización de técnicas de web scraping se ha obtenido la informac
 
 ![imagen descriptiva](https://i.imgur.com/TjdhPWw.png)
 
-
 ### Miembros del equipo de trabajo:
 
 - Ginés Molina Abril
