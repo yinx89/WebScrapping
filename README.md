@@ -29,3 +29,12 @@ Mediante la utilización de técnicas de web scraping se ha obtenido la informac
 Los datos se encuentran disponibles en Zenodo con el DOI: 10.5281/zenodo.4263419
 
 [![](https://i.imgur.com/aujYSPA.png?1)](https://zenodo.org/record/4263419)
+
+### Licencia
+
+El repositorio está protegido por copyright con todos los derechos de autor reservados, sin concesión de licencia de uso, por lo que no se permite su difusión, manipulación o uso de ningún tipo sin la autorización expresa de los autores.
+
+/* Copyright (C) Ginés Molina e Iñigo Álvarez - All Rights Reserved
+ * Unauthorized copying of this repository, via any medium is strictly prohibited
+ * Proprietary and confidential
+ */
