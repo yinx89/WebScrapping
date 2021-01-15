@@ -3,4 +3,6 @@
  * Proprietary and confidential
  */
 
-El repositorio está protegido por copyright con todos los derechos de autor reservados, sin concesión de licencia de uso, por lo que no se permite su difusión, manipulación o uso de ningún tipo sin la autorización expresa de los autores.
+El repositorio está protegido por copyright con todos los derechos de autor reservados,
+sin concesión de licencia de uso, por lo que no se permite su difusión, manipulación o 
+uso de ningún tipo sin la autorización expresa de los autores.
