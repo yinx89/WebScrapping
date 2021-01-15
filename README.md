@@ -18,6 +18,7 @@ Mediante la utilización de técnicas de web scraping se ha obtenido la informac
 ### Ficheros:
 
 * scrapper.py: programa para la obtención de los datos
+* M2.851_Prac1.pdf: documento PDF con las respuestas de la práctica
 * dataset: 
     - Remote.csv: datos de las ofertas de empleo para trabajar en remoto
     - Scotland.csv: datos de las ofertas de empleo para trabajar en Escocia
