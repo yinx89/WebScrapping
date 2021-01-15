@@ -30,6 +30,10 @@ Los datos se encuentran disponibles en Zenodo con el DOI: 10.5281/zenodo.4263419
 
 [![](https://i.imgur.com/aujYSPA.png?1)](https://zenodo.org/record/4263419)
 
+### Uso únicamente académico
+
+Este software ha sido creado con fines única y exclusivamente académicos. Los autores no son responsables del uso malintencionado de terceros.
+
 ### Licencia
 
 El repositorio está protegido por copyright con todos los derechos de autor reservados, sin concesión de licencia de uso, por lo que no se permite su difusión, manipulación o uso de ningún tipo sin la autorización expresa de los autores.
