@@ -38,7 +38,6 @@ Este software ha sido creado con fines única y exclusivamente académicos. Los 
 
 El repositorio está protegido por copyright con todos los derechos de autor reservados, sin concesión de licencia de uso, por lo que no se permite su difusión, manipulación o uso de ningún tipo sin la autorización expresa de los autores.
 
-/* Copyright (C) Ginés Molina e Iñigo Álvarez - All Rights Reserved
- * Unauthorized copying of this repository, via any medium is strictly prohibited
- * Proprietary and confidential
- */
+Copyright (C) Ginés Molina e Iñigo Álvarez - All Rights Reserved
+Unauthorized copying of this repository, via any medium is strictly prohibited
+Proprietary and confidential
